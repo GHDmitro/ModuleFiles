@@ -36,26 +36,26 @@ public class ModuleFIleImpl implements ModuleFile {
 
     @PostConstruct
     public void initALlSpreadsheets() throws IOException, ServiceException {
-//        URL SPREADSHEET_FEED_URL = null;
-//        try {
-//            SPREADSHEET_FEED_URL = new URL(
-//                    "https://spreadsheets.google.com/feeds/spreadsheets/private/full");
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        }
-//
-//        // Make a request to the API and get all spreadsheets.
-//        SpreadsheetFeed feed = spreadsheetService.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
-//        List<SpreadsheetEntry> spreadsheets = feed.getEntries();
-//
-//
-//
-//        spreadsheets.forEach((e)->{
-//            titlesMap.put(e.getTitle().getPlainText(), e.getId());
-//            System.out.println(e.getTitle().getPlainText()+"   "+ e.getId());
-//
-//        });
-        Sheets.Spreadsheets spreadsheets = service.spreadsheets();
+        URL SPREADSHEET_FEED_URL = null;
+        try {
+            SPREADSHEET_FEED_URL = new URL(
+                    "https://spreadsheets.google.com/feeds/spreadsheets/private/full");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        // Make a request to the API and get all spreadsheets.
+        SpreadsheetFeed feed = spreadsheetService.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
+        List<SpreadsheetEntry> spreadsheets = feed.getEntries();
+
+
+
+        spreadsheets.forEach((e)->{
+            titlesMap.put(e.getTitle().getPlainText(), e.getId());
+            System.out.println(e.getTitle().getPlainText()+"   "+ e.getId());
+
+        });
+//        Sheets.Spreadsheets spreadsheets = service.spreadsheets();
 
 
 
@@ -81,8 +81,17 @@ public class ModuleFIleImpl implements ModuleFile {
 
     @Override
     public List<Spreadsheet> getAllFiles() {
+        List<Spreadsheet> list = new ArrayList<>();
+        titlesMap.entrySet().forEach((e)->{
 
-        return spreadsheetEntryList;
+            try {
+                list.add(service.spreadsheets().get(e.getValue()).execute());
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+        });
+        return list;
     }
 
     @Override
@@ -133,30 +142,30 @@ public class ModuleFIleImpl implements ModuleFile {
 
 }
 
-class MySpreadsheetIntegration {
-    public static void main(String[] args)
-            throws AuthenticationException, MalformedURLException, IOException, ServiceException {
-
-        SpreadsheetService service =
-                new SpreadsheetService("MySpreadsheetIntegration-v1");
-
-        // TODO: Authorize the service object for a specific user (see other sections)
-
-        // Define the URL to request.  This should never change.
-        URL SPREADSHEET_FEED_URL = new URL(
-                "https://spreadsheets.google.com/feeds/spreadsheets/private/full");
-
-        // Make a request to the API and get all spreadsheets.
-        SpreadsheetFeed feed = service.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
-        List<SpreadsheetEntry> spreadsheets = feed.getEntries();
-
-        // Iterate through all of the spreadsheets returned
-        for (SpreadsheetEntry spreadsheet : spreadsheets) {
-            // Print the title of this spreadsheet to the screen
-            System.out.println(spreadsheet.getTitle().getPlainText());
-        }
-    }
-}
+//class MySpreadsheetIntegration {
+//    public static void main(String[] args)
+//            throws AuthenticationException, MalformedURLException, IOException, ServiceException {
+//
+//        SpreadsheetService service =
+//                new SpreadsheetService("MySpreadsheetIntegration-v1");
+//
+//        // TODO: Authorize the service object for a specific user (see other sections)
+//
+//        // Define the URL to request.  This should never change.
+//        URL SPREADSHEET_FEED_URL = new URL(
+//                "https://spreadsheets.google.com/feeds/spreadsheets/private/full");
+//
+//        // Make a request to the API and get all spreadsheets.
+//        SpreadsheetFeed feed = service.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
+//        List<SpreadsheetEntry> spreadsheets = feed.getEntries();
+//
+//        // Iterate through all of the spreadsheets returned
+//        for (SpreadsheetEntry spreadsheet : spreadsheets) {
+//            // Print the title of this spreadsheet to the screen
+//            System.out.println(spreadsheet.getTitle().getPlainText());
+//        }
+//    }
+//}
 //    private final String spreadsheetId = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms";
 
 //    public void createFile(String fileName, int rows, int columns) {
