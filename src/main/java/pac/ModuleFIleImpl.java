@@ -5,56 +5,58 @@ import com.google.api.services.sheets.v4.model.BatchGetValuesResponse;
 import com.google.api.services.sheets.v4.model.Sheet;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.ValueRange;
-import com.google.gdata.client.spreadsheet.*;
-import com.google.gdata.data.spreadsheet.*;
-import com.google.gdata.util.*;
+import com.google.gdata.client.spreadsheet.SpreadsheetService;
+import com.google.gdata.util.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Repository;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 /**
  * Created by Dmytro Tymoshenko on 12.04.17.
  */
-@Service
+@Repository
 public class ModuleFIleImpl implements ModuleFile {
 
     @Autowired
+    @Qualifier("getGoogleApi")
     private GoogleApi googleApi;
 
     private Map<String, String> titlesMap = new HashMap<>();
 
 //    private List<SpreadsheetEntry> spreadsheetEntryList;
 
-    private Sheets service = googleApi.getSheetsService();
+    private Sheets service ;
 
-    private SpreadsheetService spreadsheetService = googleApi.getSpreadsheetService();
+    private SpreadsheetService spreadsheetService ;
 
     @PostConstruct
     public void initALlSpreadsheets() throws IOException, ServiceException {
-        URL SPREADSHEET_FEED_URL = null;
-        try {
-            SPREADSHEET_FEED_URL = new URL(
-                    "https://spreadsheets.google.com/feeds/spreadsheets/private/full");
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        // Make a request to the API and get all spreadsheets.
-        SpreadsheetFeed feed = spreadsheetService.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
-        List<SpreadsheetEntry> spreadsheets = feed.getEntries();
-
-
-
-        spreadsheets.forEach((e)->{
-            titlesMap.put(e.getTitle().getPlainText(), e.getId());
-            System.out.println(e.getTitle().getPlainText()+"   "+ e.getId());
-
-        });
+        service = googleApi.getSheetsService();
+        spreadsheetService = googleApi.getSpreadsheetService();
+//        URL SPREADSHEET_FEED_URL = null;
+//        try {
+//            SPREADSHEET_FEED_URL = new URL(
+//                    "https://spreadsheets.google.com/feeds/spreadsheets/private/full");
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//        }
+//
+//
+//        // Make a request to the API and get all spreadsheets.
+//        SpreadsheetFeed feed = spreadsheetService.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
+//        List<SpreadsheetEntry> spreadsheets = feed.getEntries();
+//
+//
+//
+//        spreadsheets.forEach((e)->{
+//            titlesMap.put(e.getTitle().getPlainText(), e.getId());
+//            System.out.println(e.getTitle().getPlainText()+"   "+ e.getId());
+//
+//        });
 //        Sheets.Spreadsheets spreadsheets = service.spreadsheets();
 
 
@@ -66,7 +68,7 @@ public class ModuleFIleImpl implements ModuleFile {
 
 
     @Override
-    public void createFile(String fileName) throws IOException {
+    public Spreadsheet createFile(String fileName) throws IOException {
         if (!titlesMap.containsKey(fileName)) {
             Spreadsheet requestBody = new Spreadsheet();
             Properties properties = new Properties();
@@ -75,7 +77,11 @@ public class ModuleFIleImpl implements ModuleFile {
 
             Spreadsheet response1 = request.execute();
             titlesMap.put(fileName, response1.getSpreadsheetId());
+            return response1;
         }
+
+        return null;
+
 
     }
 
@@ -96,6 +102,7 @@ public class ModuleFIleImpl implements ModuleFile {
 
     @Override
     public List<Sheet> getListByFileName(String name) {
+
         return null;
     }
 
@@ -115,21 +122,31 @@ public class ModuleFIleImpl implements ModuleFile {
                 valueRanges.forEach((e)->{
                     sheetsFromSpread.addAll(e.getValues());
                 });
-
-//                sheetsFromSpread.forEach((e)-> System.out.println(e.get(0)));
-//                List<List<Object>>values = new List<List<Object>>;
-
-
-//        if (values == null || values.size() == 0) {
-//            System.out.println("No data found.");
-//        } else {
-//            System.out.println("Name, Major");
-//            for (List row : values) {
-//                // Print columns A and E, which correspond to indices 0 and 4.
-//                System.out.printf("%s, %s\n", row.get(0) + "______", row.get(4));
-//            }
-//        }
                 return sheetsFromSpread;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+        return null;
+    }
+
+    @Override
+    public List<List<Object>> extractSheetContent(String fileName, String sheetName) {
+        if (titlesMap.containsKey(fileName)) {
+
+            try {
+
+                String range = sheetName;
+                ValueRange response = service.spreadsheets().values()
+                        .get(titlesMap.get(fileName), range)
+                        .execute();
+
+                if (response != null) {
+                    List<List<Object>> values = response.getValues();
+                    return values;
+                }else return null;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -149,7 +166,7 @@ public class ModuleFIleImpl implements ModuleFile {
 //        SpreadsheetService service =
 //                new SpreadsheetService("MySpreadsheetIntegration-v1");
 //
-//        // TODO: Authorize the service object for a specific user (see other sections)
+//        // TOD//O: Authorize the service object for a specific user (see other sections)
 //
 //        // Define the URL to request.  This should never change.
 //        URL SPREADSHEET_FEED_URL = new URL(

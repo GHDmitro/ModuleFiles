@@ -12,11 +12,13 @@ import java.util.List;
  */
 public interface ModuleFile {
 
-    void createFile(String fileName) throws IOException;
+    Spreadsheet createFile(String fileName) throws IOException;
 
     List<Spreadsheet> getAllFiles() throws MalformedURLException;
 
     List<Sheet> getListByFileName(String name);
 
     List<List<Object>> extractContent(String fileName);
+
+    List<List<Object>> extractSheetContent(String fileName, String sheetName);
 }
